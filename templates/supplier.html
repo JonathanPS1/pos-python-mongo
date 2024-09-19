@@ -1,0 +1,239 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Supplier</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahSupplierModal">
+                    Add Supplier
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('supplier') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Supplier -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Nama Supplier</th>
+                <th scope="col">Alamat</th>
+                <th scope="col">No Telepon</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for supplier in supplier_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ supplier.nama_supplier }}</td>
+                <td>{{ supplier.alamat }}</td>
+                <td>{{ supplier.no_telepon }}</td>
+                <td>
+                    <!-- Edit Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editSupplierModal{{ supplier._id }}">
+                        Edit
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-supplier"
+                        data-supplier-id="{{ supplier._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('supplier', page=1) }}"><< </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('supplier', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_supplier // per_page) + (1 if total_supplier % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('supplier', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_supplier // per_page) + (1 if total_supplier % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('supplier', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_supplier // per_page) + (1 if total_supplier % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('supplier', page=(total_supplier // per_page) + (1 if total_supplier % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+<!-- PopUp Tambah Supplier -->
+<div class="modal fade" id="tambahSupplierModal" tabindex="-1" aria-labelledby="tambahSupplierModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahSupplierModalLabel">Add Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input Supplier -->
+                <form id="formTambahSupplier">
+                    <div class="mb-3">
+                        <label for="namaSupplier" class="form-label">Nama Supplier</label>
+                        <input type="text" class="form-control" id="namaSupplier" name="namaSupplier" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alamat" class="form-label">Alamat</label>
+                        <input type="text" class="form-control" id="alamat" name="alamat" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noTelepon" class="form-label">No Telepon</label>
+                        <input type="text" class="form-control" id="noTelepon" name="noTelepon" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop Up Edit Supplier -->
+{% for supplier in supplier_data %}
+<div class="modal fade" id="editSupplierModal{{ supplier._id }}" tabindex="-1"
+    aria-labelledby="editSupplierModalLabel{{ supplier._id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSupplierModalLabel{{ supplier._id }}">Edit Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Edit Supplier -->
+                <form id="formEditSupplier{{ supplier._id }}" data-supplier-id="{{ supplier._id }}">
+                    <div class="mb-3">
+                        <label for="editNamaSupplier{{ supplier._id }}" class="form-label">Nama Supplier</label>
+                        <input type="text" class="form-control" id="editNamaSupplier{{ supplier._id }}"
+                            name="editNamaSupplier" value="{{ supplier.nama_supplier }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAlamat{{ supplier._id }}" class="form-label">Alamat</label>
+                        <input type="text" class="form-control" id="editAlamat{{ supplier._id }}"
+                            name="editAlamat" value="{{ supplier.alamat }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNoTelepon{{ supplier._id }}" class="form-label">No Telepon</label>
+                        <input type="text" class="form-control" id="editNoTelepon{{ supplier._id }}"
+                            name="editNoTelepon" value="{{ supplier.no_telepon }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    //Add
+    $(document).ready(function () {
+        $('#formTambahSupplier').on('submit', function (event) {
+            event.preventDefault();
+
+            var supplierData = {
+                nama_supplier: $('#namaSupplier').val(),
+                alamat: $('#alamat').val(),
+                no_telepon: $('#noTelepon').val()
+            };
+
+            $.ajax({
+                url: '/supplier/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(supplierData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#tambahSupplierModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    // Edit
+    $(document).ready(function () {
+        $('form[id^="formEditSupplier"]').on('submit', function (event) {
+            event.preventDefault();
+            var supplierId = $(this).attr('data-supplier-id');
+            var supplierData = {
+                nama_supplier: $('#editNamaSupplier' + supplierId).val(),
+                alamat: $('#editAlamat' + supplierId).val(),
+                no_telepon: $('#editNoTelepon' + supplierId).val()
+            };
+
+            $.ajax({
+                url: '/supplier/update/' + supplierId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(supplierData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editSupplierModal' + supplierId).modal('hide');
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    //Delete
+    $(document).ready(function () {
+        $('.btn-delete-supplier').on('click', function () {
+            var supplierId = $(this).data('supplier-id');
+            if (confirm('Apakah Anda yakin ingin menghapus supplier ini?')) {
+                $.ajax({
+                    url: '/supplier/hapus/' + supplierId,
+                    type: 'GET',
+                    success: function (response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

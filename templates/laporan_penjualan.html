@@ -1,0 +1,185 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Laporan Penjualan</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('laporan_penjualan') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Laporan Penjualan -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Tanggal</th>
+                <th scope="col">Member</th>
+                <th scope="col">Total Harga</th>
+                <th scope="col">Diskon Member</th>
+                <th scope="col">Total Bayar</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for laporan_penjualan in laporan_penjualan_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ laporan_penjualan.tanggal }}</td>
+                <td>{{ laporan_penjualan.member }}</td>
+                <td>{{ laporan_penjualan.total |format_currency }}</td>
+                <td>{{ laporan_penjualan.diskon_member }}</td>
+                <td>{{ laporan_penjualan.bayar |format_currency }}</td>
+                <td>
+                    <!-- Lihat Button -->
+                    <button type="button" class="btn btn-primary btn-lihat-laporan_penjualan" data-bs-toggle="modal"
+                        data-bs-target="#lihatLaporanPenjualanModal" data-transaction-id="{{ laporan_penjualan._id }}">
+                        Lihat
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-laporan_penjualan"
+                        data-laporan_penjualan-id="{{ laporan_penjualan._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('laporan_penjualan', page=1) }}">
+                    << </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('laporan_penjualan', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_laporan_penjualan // per_page) + (1 if total_laporan_penjualan % per_page > 0
+            else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('laporan_penjualan', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_laporan_penjualan // per_page) + (1 if total_laporan_penjualan % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('laporan_penjualan', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_laporan_penjualan // per_page) + (1 if total_laporan_penjualan % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('laporan_penjualan', page=(total_laporan_penjualan // per_page) + (1 if total_laporan_penjualan % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+
+<!-- PopUp Lihat LaporanPenjualan -->
+<div class="modal fade" id="lihatLaporanPenjualanModal" tabindex="-1" aria-labelledby="lihatLaporanPenjualanModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lihatLaporanPenjualanModalLabel">Detail Laporan Penjualan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelDetailLaporanPenjualan">
+                    <thead>
+                        <tr>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Jumlah</th>
+                            <th>Diskon</th>
+                            <th>Sub Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loop through each laporan penjualan -->
+                        {% for laporan_penjualan in laporan_penjualan_data %}
+                        <!-- Loop through each product detail in laporan penjualan -->
+                        {% for product_detail in laporan_penjualan.products %}
+                        <tr>
+                            <td>{{ product_detail.kode_produk }}</td>
+                            <td>{{ product_detail.nama_produk }}</td>
+                            <td>{{ product_detail.harga }}</td>
+                            <td>{{ product_detail.jumlah }}</td>
+                            <td>{{ product_detail.diskon }}</td>
+                            <td>{{ product_detail.sub_total }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Menangani klik tombol "lihat"
+        $('.btn-lihat-laporan_penjualan').on('click', function() {
+            // Mengambil id transaksi dari atribut data-transaction-id
+            var transactionId = $(this).data('transaction-id');
+
+            // Mengosongkan tabel detail laporan penjualan
+            $('#tabelDetailLaporanPenjualan tbody').empty();
+
+            // Mendapatkan detail transaksi berdasarkan id transaksi
+            var laporan_penjualan_data = JSON.parse('{{ laporan_penjualan_data | tojson | safe }}');
+            var transaction = laporan_penjualan_data.find(function(item) {
+                return item._id == transactionId;
+            });
+
+            // Menambahkan detail produk ke tabel
+            transaction.products.forEach(function(product) {
+                var row = '<tr>' +
+                    '<td>' + product.kode_produk + '</td>' +
+                    '<td>' + product.nama_produk + '</td>' +
+                    '<td>' + formatCurrency(product.harga) + ' </td>' +
+                    '<td>' + product.jumlah + '</td>' +
+                    '<td>' + product.diskon + '</td>' +
+                    '<td>' + formatCurrency(product.sub_total) + '</td>' +
+                    '</tr>';
+                $('#tabelDetailLaporanPenjualan tbody').append(row);
+            });
+        });
+    });
+
+    $(document).ready(function() {
+    $('.btn-delete-laporan_penjualan').on('click', function() {
+        var laporanPenjualanId = $(this).data('laporan_penjualan-id');
+
+        if (confirm('Apakah Anda yakin ingin menghapus laporan penjualan ini?')) {
+            $.ajax({
+                url: '/penjualan/delete/' + laporanPenjualanId,
+                type: 'DELETE',
+                success: function(response) {
+                    window.location.reload();
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", error);
+                    alert('Terjadi kesalahan saat menghapus laporan penjualan: ' + xhr.responseText);
+                }
+            });
+        }
+    });
+});
+
+</script>
+{% endblock %}

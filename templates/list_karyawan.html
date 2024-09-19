@@ -1,0 +1,142 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Daftar Karyawan</h1>
+    <div class="card mt-4">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Nama Lengkap</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Nomor Telepon</th>
+                        <th scope="col">Tanggal Bergabung</th>
+                        <th scope="col">Posisi</th>
+                        <th scope="col">Gaji</th>
+                        <th scope="col">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for karyawan in karyawans %}
+                    <tr>
+                        <td>{{ karyawan.nama_lengkap }}</td>
+                        <td>{{ karyawan.email }}</td>
+                        <td>{{ karyawan.nomor_telepon }}</td>
+                        <td>{{ karyawan.tanggal_bergabung }}</td>
+                        <td>{{ karyawan.posisi }}</td>
+                        <td>{{ karyawan.gaji |format_currency }}</td>
+                        <td>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal"
+                                onclick="loadEditForm('{{ karyawan._id }}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteKaryawan('{{ karyawan._id }}')">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+{% for karyawan in karyawans %}
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Edit Karyawan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-karyawan-form">
+                    <input type="hidden" id="id" name="id" value="{{karyawan._id}}">
+                    <div class="mb-3">
+                        <label for="nama_lengkap" class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-control" id="nama_lengkap" name="nama_lengkap"
+                            value="{{karyawan.nama_lengkap}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{karyawan.email}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nomor_telepon" class="form-label">Nomor Telepon</label>
+                        <input type="text" class="form-control" id="nomor_telepon" name="nomor_telepon"
+                            value="{{karyawan.nomor_telepon}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tanggal_bergabung" class="form-label">Tanggal Bergabung</label>
+                        <input type="date" class="form-control" id="tanggal_bergabung" name="tanggal_bergabung"
+                            value="{{karyawan.tanggal_bergabung}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="posisi" class="form-label">Posisi</label>
+                        <input type="text" class="form-control" id="posisi" name="posisi" value="{{karyawan.posisi}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="gaji" class="form-label">Gaji</label>
+                        <input type="text" class="form-control" id="gaji" name="gaji" value="{{karyawan.gaji}}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="foto_profil" class="form-label">Foto Profil</label>
+                        <input type="file" class="form-control" id="foto_profil" name="foto_profil"
+                            value="{{karyawan.foto_profil}}">
+                    </div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+    crossorigin="anonymous"></script>
+
+<script>
+    $('#edit-karyawan-form').submit(function (event) {
+        event.preventDefault();
+        var formData = new FormData(this);
+        var id = $('#id').val();
+
+        $.ajax({
+            url: '/update_karyawan/' + id,
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function (response) {
+                $('#editModal').modal('hide');
+                alert('Data Karyawan sudah terupdate!');
+                location.reload();
+            },
+            error: function (xhr, status, error) {
+                alert('Error updating karyawan: ' + xhr.responseText);
+            }
+        });
+    });
+
+    function deleteKaryawan(id) {
+        if (confirm('Apakah anda ingin menghapus karyawan ini?')) {
+            $.ajax({
+                url: '/delete_karyawan/' + id,
+                type: 'DELETE',
+                success: function (result) {
+                    alert('Data Karyawan sudah dihapus!');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Error deleting karyawan: ' + xhr.responseText);
+                }
+            });
+        }
+    }
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="mb-3">
+        <h3 class="fw-bold fs-4 mb-3">Admin Dashboard</h3>
+        <div class="row">
+            <!-- Card Total Kategori -->
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-body py-5">
+                        <h5 class="mb-3 fw-bold">Total Kategori</h5>
+                        <p class="mb-0 fs-5 text fw-bold text-decoration-underline" id="total_kategori">...</p>
+                        <i class="lni lni-archive" style="position: absolute; top: 25px; right: 30px; font-size: 100px; color:rgb(202, 202, 202)"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Card Total Brand -->
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-body py-5">
+                        <h5 class="mb-3 fw-bold">Total Brand</h5>
+                        <p class="mb-0 fs-5 text fw-bold text-decoration-underline" id="total_brand">...</p>
+                        <i class="lni lni-text-format" style="position: absolute; top: 27px; right: 30px; font-size: 100px; color:rgb(202, 202, 202)"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Card Total Supplier -->
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-body py-5">
+                        <h5 class="mb-3 fw-bold">Total Supplier</h5>
+                        <p class="mb-0 fs-5 text fw-bold text-decoration-underline" id="total_supplier">...</p>
+                        <i class="lni lni-delivery" style="position: absolute; top: 10px; right: 30px; font-size: 140px; color:rgb(202, 202, 202)"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center mt-3">
+            <!-- Card Total Member -->
+            <div class="col-12 col-md-4 me-3">
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-body py-5">
+                        <h5 class="mb-3 fw-bold">Total Member</h5>
+                        <p class="mb-0 fs-5 text fw-bold text-decoration-underline" id="total_member">...</p>
+                        <i class="lni lni-postcard" style="position: absolute; top: 20px; right: 30px; font-size: 120px; color:rgb(202, 202, 202)"></i>
+                    </div>
+                </div>
+            </div>
+            <!-- Card Total Produk -->
+            <div class="col-12 col-md-4">
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-body py-5">
+                        <h5 class="mb-3 fw-bold">Total Produk</h5>
+                        <p class="mb-0 fs-5 text fw-bold text-decoration-underline" id="total_produk">...</p>
+                        <i class="lni lni-package" style="position: absolute; top: 30px; right: 35px; font-size: 100px; color:rgb(202, 202, 202)"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: '/get_total_kategori',
+            type: 'GET',
+            success: function (response) {
+                $('#total_kategori').text(response.total_kategori);
+            },
+            error: function (xhr, status, error) {
+                $('#total_kategori').text('Error');
+                console.error('Terjadi kesalahan:', error);
+            }
+        });
+
+        $.ajax({
+            url: '/get_total_brand',
+            type: 'GET',
+            success: function (response) {
+                $('#total_brand').text(response.total_brand);
+            },
+            error: function (xhr, status, error) {
+                $('#total_brand').text('Error');
+                console.error('Terjadi kesalahan:', error);
+            }
+        });
+
+
+        $.ajax({
+            url: '/get_total_supplier',
+            type: 'GET',
+            success: function (response) {
+                $('#total_supplier').text(response.total_supplier);
+            },
+            error: function (xhr, status, error) {
+                $('#total_supplier').text('Error');
+                console.error('Terjadi kesalahan:', error);
+            }
+        });
+
+        $.ajax({
+            url: '/get_total_member',
+            type: 'GET',
+            success: function (response) {
+                $('#total_member').text(response.total_member);
+            },
+            error: function (xhr, status, error) {
+                $('#total_member').text('Error');
+                console.error('Terjadi kesalahan:', error);
+            }
+        });
+
+        $.ajax({
+            url: '/get_total_produk',
+            type: 'GET',
+            success: function (response) {
+                $('#total_produk').text(response.total_produk);
+            },
+            error: function (xhr, status, error) {
+                $('#total_produk').text('Error');
+                console.error('Terjadi kesalahan:', error);
+            }
+        });
+    });
+</script>
+{% endblock %}

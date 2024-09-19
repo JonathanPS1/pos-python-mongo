@@ -1,0 +1,503 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Pembelian</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahPembelianModal">
+                    Add Pembelian
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('pembelian') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Pembelian -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Tanggal</th>
+                <th scope="col">Supplier</th>
+                <th scope="col">Total Item</th>
+                <th scope="col">Total Harga</th>
+                <th scope="col">Diskon</th>
+                <th scope="col">Total Bayar</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pembelian in pembelian_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ pembelian.tanggal }}</td>
+                <td>{{ pembelian.supplier }}</td>
+                <td>{{ pembelian.total_item }}</td>
+                <td>{{ pembelian.total_harga|format_currency }}</td>
+                <td>{{ pembelian.diskon }}</td>
+                <td>{{ pembelian.total_bayar|format_currency }}</td>
+                <td>
+                    <!-- Lihat Button -->
+                    <button type="button" class="btn btn-primary btn-lihat-pembelian" data-bs-toggle="modal"
+                        data-bs-target="#lihatPembelianModal" data-id-transaksi="{{ pembelian.id_transaksi }}">
+                        Lihat
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-pembelian"
+                        data-pembelian-id="{{ pembelian._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('pembelian', page=1) }}">
+                    << </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('pembelian', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_pembelian // per_page) + (1 if total_pembelian % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('pembelian', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_pembelian // per_page) + (1 if total_pembelian % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pembelian', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_pembelian // per_page) + (1 if total_pembelian % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('pembelian', page=(total_pembelian // per_page) + (1 if total_pembelian % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+
+<!-- PopUp Tambah Pembelian -->
+<div class="modal fade" id="tambahPembelianModal" tabindex="-1" aria-labelledby="tambahPembelianModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahPembelianModalLabel">Tambah Pembelian</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input Pembelian -->
+                <form id="formTambahPembelian">
+                    <input type="hidden" id="id_transaksi" name="id_transaksi" value="{{ id_transaksi }}">
+                    <div class="mb-3">
+                        <label for="tanggal" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" id="tanggal" name="tanggal" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="supplier" class="form-label">Supplier</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="supplier" name="supplier" readonly required>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                data-bs-target="#pilihSupplierModal">Pilih Supplier</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cariProduk" class="form-label">Cari Produk</label>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#pilihProdukModal">Cari Produk</button>
+                    </div>
+                    <table class="table table-bordered" id="tabelPembelian">
+                        <thead>
+                            <tr>
+                                <th>Kode Produk</th>
+                                <th>Nama Produk</th>
+                                <th>Harga</th>
+                                <th>Jumlah</th>
+                                <th>Sub Total</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                    <div class="mb-3">
+                        <label for="total_harga" class="form-label">Total Harga</label>
+                        <input type="number" class="form-control" id="total_harga" name="total_harga" readonly required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="diskon" class="form-label">Diskon (%)</label>
+                        <input type="number" class="form-control" id="diskon" name="diskon">
+                    </div>
+                    <div class="mb-3">
+                        <label for="total_bayar" class="form-label">Total Bayar</label>
+                        <input type="number" class="form-control" id="total_bayar" name="total_bayar" readonly required>
+                    </div>
+                    <input type="hidden" id="total_item" name="total_item" value="0">
+                    <button type="submit" class="btn btn-success">Simpan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Pilih Supplier -->
+<div class="modal fade" id="pilihSupplierModal" tabindex="-1" aria-labelledby="pilihSupplierModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pilihSupplierModalLabel">Pilih Supplier</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelSupplier">
+                    <thead>
+                        <tr>
+                            <th>Nama Supplier</th>
+                            <th>Alamat</th>
+                            <th>No Telepon</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td>{{ supplier.nama_supplier }}</td>
+                            <td>{{ supplier.alamat }}</td>
+                            <td>{{ supplier.no_telepon }}</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-pilih-supplier"
+                                    data-supplier-name="{{ supplier.nama_supplier }}">Pilih</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Pilih Produk -->
+<div class="modal fade" id="pilihProdukModal" tabindex="-1" aria-labelledby="pilihProdukModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pilihProdukModalLabel">Pilih Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelProduk">
+                    <thead>
+                        <tr>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produk in products %}
+                        <tr>
+                            <td>{{ produk.kode_produk }}</td>
+                            <td>{{ produk.nama_produk  }}</td>
+                            <td>{{ produk.harga_beli |format_currency }}</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-pilih-produk"
+                                    data-produk-kode="{{ produk.kode_produk }}"
+                                    data-produk-nama="{{ produk.nama_produk }}"
+                                    data-produk-harga="{{ produk.harga_beli }}">Pilih</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Lihat Pembelian -->
+<div class="modal fade" id="lihatPembelianModal" tabindex="-1" aria-labelledby="lihatPembelianModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lihatPembelianModalLabel">Detail Pembelian</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelDetailPembelian">
+                    <thead>
+                        <tr>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Jumlah</th>
+                            <th>Sub Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        const idTransaksi = uuidv4();
+        $('#id_transaksi').val(idTransaksi);
+
+        // Tambah Pembelian
+        $('#formTambahPembelian').on('submit', function (event) {
+            event.preventDefault();
+
+            var pembelianData = {
+                id_transaksi: $('#id_transaksi').val(),
+                tanggal: $('#tanggal').val(),
+                supplier: $('#supplier').val(),
+                total_item: $('#total_item').val(),
+                total_harga: $('#total_harga').val(),
+                diskon: $('#diskon').val(),
+                total_bayar: $('#total_bayar').val()
+            };
+
+            $.ajax({
+                url: '/pembelian/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(pembelianData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#tambahPembelianModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+        function addProductToTable(kode, nama, harga) {
+            const tbody = document.querySelector('#tabelPembelian tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+        <td>${kode}</td>
+        <td>${nama}</td>
+        <td>${harga}</td>
+        <td><input type="number" class="form-control jumlah-produk" data-harga="${harga}" value="1"></td>
+        <td class="sub-total">${harga}</td>
+        <td><button type="button" class="btn btn-danger btn-remove-produk">Remove</button></td>
+    `;
+            tbody.appendChild(row);
+            updateTotalHarga();
+            updateTotalItem();
+
+            row.querySelector('.btn-remove-produk').addEventListener('click', function () { //Hapus dari tabel
+                row.remove();
+                updateTotalHarga();
+                updateTotalItem();
+            });
+
+            row.querySelector('.jumlah-produk').addEventListener('input', function () {
+                const jumlah = parseFloat(this.value);
+                const harga = parseFloat(this.getAttribute('data-harga'));
+                const subTotal = jumlah * harga;
+                row.querySelector('.sub-total').textContent = subTotal;
+                updateTotalHarga();
+                updateTotalItem();
+            });
+        }
+
+        function updateTotalItem() {
+            const rows = document.querySelectorAll('#tabelPembelian tbody tr');
+            let totalItem = 0;
+            rows.forEach(row => {
+                const jumlah = parseFloat(row.querySelector('.jumlah-produk').value);
+                totalItem += jumlah;
+            });
+            document.getElementById('total_item').value = totalItem;
+        }
+
+        function updateTotalHarga() {
+            const rows = document.querySelectorAll('#tabelPembelian tbody tr');
+            let total = 0;
+            rows.forEach(row => {
+                const subTotal = parseFloat(row.querySelector('.sub-total').textContent);
+                total += subTotal;
+            });
+            document.getElementById('total_harga').value = total;
+            updateTotalBayar();
+        }
+
+        document.getElementById('diskon').addEventListener('input', updateTotalBayar); // Ambil Diskon
+
+        function updateTotalBayar() {
+            const totalHarga = parseFloat(document.getElementById('total_harga').value);
+            const diskon = parseFloat(document.getElementById('diskon').value);
+            const totalBayar = totalHarga - (totalHarga * (diskon / 100));
+            document.getElementById('total_bayar').value = totalBayar;
+        }
+
+        function updateTotalItem() {
+            let totalItem = 0;
+            $('#tabelPembelian tbody tr').each(function () {
+                totalItem += parseFloat($(this).find('.jumlah-produk').val());
+            });
+            $('#total_item').val(totalItem);
+        }
+
+        function updateTotalHarga() {
+            let total = 0;
+            $('#tabelPembelian tbody tr').each(function () {
+                total += parseFloat($(this).find('.sub-total').text());
+            });
+            $('#total_harga').val(total);
+            updateTotalBayar();
+        }
+
+        $('#diskon').on('input', updateTotalBayar);
+
+        function updateTotalBayar() {
+            const totalHarga = parseFloat($('#total_harga').val());
+            const diskon = parseFloat($('#diskon').val()) || 0;
+            const totalBayar = totalHarga - (totalHarga * (diskon / 100));
+            $('#total_bayar').val(totalBayar);
+        }
+
+        // Lihat Pembelian
+        $('.btn-lihat-pembelian').on('click', function () {
+            var idTransaksi = $(this).data('id-transaksi');
+            loadPembelianDetails(idTransaksi);
+        });
+
+        function loadPembelianDetails(idTransaksi) {
+            $.ajax({
+                url: `/detail_pembelian/${idTransaksi}`,
+                type: 'GET',
+                success: function (data) {
+                    const tbody = document.querySelector('#tabelDetailPembelian tbody');
+                    tbody.innerHTML = '';
+                    data.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.produk_kode}</td>
+                        <td>${item.produk_nama}</td>
+                        <td>${formatCurrency(item.harga)}</td>
+                        <td>${item.jumlah}</td>
+                        <td>${formatCurrency(item.sub_total)}</td>
+                    `;
+                        tbody.appendChild(row);
+                    });
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        }
+
+        // Pilih Supplier
+        document.querySelectorAll('.btn-pilih-supplier').forEach(button => {
+            button.addEventListener('click', function () {
+                const supplierName = this.getAttribute('data-supplier-name');
+                document.getElementById('supplier').value = supplierName;
+                const modal = bootstrap.Modal.getInstance(document.getElementById('pilihSupplierModal'));
+                modal.hide();
+            });
+        });
+
+        // Pilih Produk
+        document.querySelectorAll('.btn-pilih-produk').forEach(button => {
+            button.addEventListener('click', function () {
+                const produkKode = this.getAttribute('data-produk-kode');
+                const produkNama = this.getAttribute('data-produk-nama');
+                const produkHarga = this.getAttribute('data-produk-harga');
+                addProductToTable(produkKode, produkNama, produkHarga);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('pilihProdukModal'));
+                modal.hide();
+            });
+        });
+
+
+        // Tambahkan Detail Transaksi
+        $('#formTambahPembelian').on('submit', function (event) {
+            event.preventDefault();
+
+            const detailPembelian = [];
+            const idTransaksi = $('#id_transaksi').val();
+
+            $('#tabelPembelian tbody tr').each(function () {
+                const produkKode = $(this).find('td:eq(0)').text();
+                const produkNama = $(this).find('td:eq(1)').text();
+                const harga = parseFloat($(this).find('td:eq(2)').text());
+                const jumlah = parseFloat($(this).find('.jumlah-produk').val());
+                const subTotal = parseFloat($(this).find('.sub-total').text());
+
+                detailPembelian.push({
+                    id_transaksi: idTransaksi,
+                    produk_kode: produkKode,
+                    produk_nama: produkNama,
+                    harga: harga,
+                    jumlah: jumlah,
+                    sub_total: subTotal
+                });
+            });
+
+            $.ajax({
+                url: '/tambah_detail_pembelian',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(detailPembelian),
+                success: function (response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+
+        // Delete Pembelian
+        document.querySelectorAll('.btn-delete-pembelian').forEach(button => {
+            button.addEventListener('click', function () {
+                const pembelianId = this.getAttribute('data-pembelian-id');
+
+                if (confirm('Apakah Anda yakin ingin menghapus pembelian ini?')) {
+                    $.ajax({
+                        url: `/pembelian/hapus/${pembelianId}`,
+                        type: 'DELETE',
+                        success: function (response) {
+                            alert(response.message);
+                            location.reload();
+                        },
+                        error: function (xhr, status, error) {
+                            alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                        }
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,362 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Produk</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahProdukModal">
+                    Add Produk
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('produk') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Produk -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Kode Produk</th>
+                <th>Nama Produk</th>
+                <th>Kategori</th>
+                <th>Brand</th>
+                <th>Harga Beli</th>
+                <th>Harga Jual</th>
+                <th>Diskon</th>
+                <th>Stok</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for produk in produk_data %}
+            <tr>
+                <th>{{ loop.index }}</th>
+                <td><span class="bg-info p-1" style="border-radius: 15px;">{{ produk.kode_produk }}</span></td>
+                <td>{{ produk.nama_produk }}</td>
+                <td>{{ produk.kategori_nama }}</td>
+                <td>{{ produk.brand_nama }}</td>
+                <td>{{ produk.harga_beli|format_currency }}</span></td>
+                <td>{{ produk.harga_jual|format_currency }}</span></td>
+                <td>{{ produk.diskon }}</td>
+                <td>{{ produk.stok }}</td>
+                <td>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editProdukModal{{ produk._id }}">
+                        Edit
+                    </button>
+                    <button type="button" class="btn btn-danger btn-delete-produk" data-produk-id="{{ produk._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('produk', page=1) }}">
+                    << </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('produk', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_produk // per_page) + (1 if total_produk % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('produk', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_produk // per_page) + (1 if total_produk % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('produk', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_produk // per_page) + (1 if total_produk % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('produk', page=(total_produk // per_page) + (1 if total_produk % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+
+<!-- PopUp Tambah Produk -->
+<div class="modal fade" id="tambahProdukModal" tabindex="-1" aria-labelledby="tambahProdukModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahProdukModalLabel">Tambah Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="tambahProdukForm">
+                    <div class="mb-3">
+                        <label for="kode_produk" class="form-label">Kode Produk</label>
+                        <input type="text" class="form-control" id="kode_produk" name="kode_produk" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nama_produk" class="form-label">Nama Produk</label>
+                        <input type="text" class="form-control" id="nama_produk" name="nama_produk" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="kategori_id" class="form-label">Kategori</label>
+                        <select class="form-select" id="kategori_nama" name="kategori_nama" required>
+                            {% for kategori in kategori_data %}
+                            <option value="{{ kategori.nama_kategori }}">{{ kategori.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="brand_id" class="form-label">Brand</label>
+                        <select class="form-select" id="brand_nama" name="brand_nama" required>
+                            {% for brand in brand_data %}
+                            <option value="{{ brand.nama_brand }}">{{ brand.nama_brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="harga_beli" class="form-label">Harga Beli</label>
+                        <input type="number" class="form-control" id="harga_beli" name="harga_beli" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="harga_jual" class="form-label">Harga Jual</label>
+                        <input type="number" class="form-control" id="harga_jual" name="harga_jual" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="diskon" class="form-label">Diskon (%)</label>
+                        <input type="number" class="form-control" id="diskon" name="diskon">
+                    </div>
+                    <div class="mb-3">
+                        <label for="stok" class="form-label">Stok</label>
+                        <input type="number" class="form-control" id="stok" name="stok" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Edit Produk -->
+{% for produk in produk_data %}
+<div class="modal fade" id="editProdukModal{{ produk._id }}" tabindex="-1" aria-labelledby="editProdukModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProdukModalLabel">Edit Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProdukForm{{ produk._id }}" data-produk-id="{{ produk._id }}">
+                    <div class="mb-3">
+                        <label for="edit_kode_produk" class="form-label">Kode Produk</label>
+                        <input type="text" class="form-control" id="edit_kode_produk" name="edit_kode_produk"
+                            value="{{ produk.kode_produk }}" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_nama_produk" class="form-label">Nama Produk</label>
+                        <input type="text" class="form-control" id="edit_nama_produk" name="edit_nama_produk"
+                            value="{{ produk.nama_produk }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_kategori_nama" class="form-label">Kategori</label>
+                        <select class="form-select" id="edit_kategori_nama" name="edit_kategori_nama" required>
+                            {% for kategori in kategori_data %}
+                            <option value="{{ kategori.nama_kategori }}" {% if
+                                kategori.nama_kategori==produk.kategori_nama %} selected {% endif %}>{{
+                                kategori.nama_kategori }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_brand_nama" class="form-label">Brand</label>
+                        <select class="form-select" id="edit_brand_nama" name="edit_brand_nama" required>
+                            {% for brand in brand_data %}
+                            <option value="{{ brand.nama_brand }}" {% if brand.nama_brand==produk.brand_nama %} selected
+                                {% endif %}>{{ brand.nama_brand }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_harga_beli" class="form-label">Harga Beli</label>
+                        <input type="number" class="form-control" id="edit_harga_beli" name="edit_harga_beli"
+                            value="{{ produk.harga_beli }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_harga_jual" class="form-label">Harga Jual</label>
+                        <input type="number" class="form-control" id="edit_harga_jual" name="edit_harga_jual"
+                            value="{{ produk.harga_jual }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_diskon" class="form-label">Diskon (%)</label>
+                        <input type="number" class="form-control" id="edit_diskon" name="edit_diskon"
+                            value="{{ produk.diskon }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_stok" class="form-label">Stok</label>
+                        <input type="number" class="form-control" id="edit_stok" name="edit_stok"
+                            value="{{ produk.stok }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    //Generate Kode Produk
+    $('#kategori_nama, #brand_nama').on('change', function () {
+        var kategori_nama = $('#kategori_nama').val();
+        var brand_nama = $('#brand_nama').val();
+
+        if (kategori_nama && brand_nama) {
+            $.ajax({
+                url: '/produk/generate_kode',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ kategori_nama: kategori_nama, brand_nama: brand_nama }),
+                success: function (response) {
+                    $('#kode_produk').val(response.kode_produk);
+                },
+                error: function (response) {
+                    alert('Gagal menghasilkan kode produk.');
+                }
+            });
+        }
+    });
+
+    //Add
+    // Tambah Produk
+    $('#tambahProdukForm').on('submit', function (event) {
+        event.preventDefault();
+        var produkData = {
+            kode_produk: $('#kode_produk').val(),
+            nama_produk: $('#nama_produk').val(),
+            kategori_nama: $('#kategori_nama').val(),
+            brand_nama: $('#brand_nama').val(),
+            harga_beli: parseInt($('#harga_beli').val(), 10), // Konversi ke integer
+            harga_jual: parseInt($('#harga_jual').val(), 10), // Konversi ke integer
+            diskon: parseInt($('#diskon').val(), 10), // Konversi ke integer
+            stok: parseInt($('#stok').val(), 10) // Konversi ke integer
+        };
+
+        $.ajax({
+            url: '/produk/tambah',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(produkData),
+            success: function (response) {
+                alert(response.message);
+                location.reload();
+            },
+            error: function (response) {
+                alert(response.responseJSON.message);
+            }
+        });
+    });
+
+    // Edit Produk
+    $(document).ready(function () {
+        $('form[id^="editProdukForm"]').on('submit', function (event) {
+            event.preventDefault();  // Mencegah form melakukan submit biasa
+
+            var productId = $(this).attr('data-produk-id');
+            var namaProduk = $(this).find('#edit_nama_produk').val();
+            var kategoriNama = $(this).find('#edit_kategori_nama').val();
+            var brandNama = $(this).find('#edit_brand_nama').val();
+            var hargaBeli = parseInt($(this).find('#edit_harga_beli').val(), 10);
+            var hargaJual = parseInt($(this).find('#edit_harga_jual').val(), 10); 
+            var diskon = parseInt($(this).find('#edit_diskon').val(), 10);
+            var stok = parseInt($(this).find('#edit_stok').val(), 10);
+
+            var productData = {
+                nama_produk: namaProduk,
+                kategori_nama: kategoriNama,
+                brand_nama: brandNama,
+                harga_beli: hargaBeli,
+                harga_jual: hargaJual,
+                diskon: diskon,
+                stok: stok
+            };
+
+            $.ajax({
+                url: '/produk/update/' + productId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(productData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editProdukModal' + productId).modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+
+
+    // Generate Kode Produk saat Edit
+    $('#edit_kategori_nama, #edit_brand_nama').on('change', function () {
+        var edit_kategori_nama = $('#edit_kategori_nama').val();
+        var edit_brand_nama = $('#edit_brand_nama').val();
+
+        if (edit_kategori_nama && edit_brand_nama) {
+            $.ajax({
+                url: '/produk/generate_kode',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ kategori_nama: edit_kategori_nama, brand_nama: edit_brand_nama }),
+                success: function (response) {
+                    $('#edit_kode_produk').val(response.kode_produk);
+                },
+                error: function (response) {
+                    alert('Gagal menghasilkan kode produk.');
+                }
+            });
+        }
+    });
+
+    //Delete
+    $('.btn-delete-produk').on('click', function () {
+        var produkId = $(this).attr('data-produk-id');
+        if (confirm('Apakah Anda yakin ingin menghapus produk ini?')) {
+            $.ajax({
+                url: '/produk/hapus/' + produkId,
+                type: 'DELETE',
+                success: function (response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

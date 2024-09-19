@@ -1,0 +1,239 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Pengeluaran</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahPengeluaranModal">
+                    Add Pengeluaran
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('pengeluaran') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Pengeluaran -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Tanggal</th>
+                <th scope="col">Jenis Pengeluaran</th>
+                <th scope="col">Nominal</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pengeluaran in pengeluaran_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ pengeluaran.tanggal }}</td>
+                <td>{{ pengeluaran.jenis_pengeluaran }}</td>
+                <td>{{ pengeluaran.nominal|format_currency }}</td>
+                <td>
+                    <!-- Edit Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editPengeluaranModal{{ pengeluaran._id }}">
+                        Edit
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-pengeluaran"
+                        data-pengeluaran-id="{{ pengeluaran._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('pengeluaran', page=1) }}"><< </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('pengeluaran', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_pengeluaran // per_page) + (1 if total_pengeluaran % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('pengeluaran', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_pengeluaran // per_page) + (1 if total_pengeluaran % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('pengeluaran', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_pengeluaran // per_page) + (1 if total_pengeluaran % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('pengeluaran', page=(total_pengeluaran // per_page) + (1 if total_pengeluaran % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+<!-- PopUp Tambah Pengeluaran -->
+<div class="modal fade" id="tambahPengeluaranModal" tabindex="-1" aria-labelledby="tambahPengeluaranModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahPengeluaranModalLabel">Add Pengeluaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input Pengeluaran -->
+                <form id="formTambahPengeluaran">
+                    <div class="mb-3">
+                        <label for="tanggal" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" id="tanggal" name="tanggal" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="jenisPengeluaran" class="form-label">Jenis Pengeluaran</label>
+                        <input type="text" class="form-control" id="jenisPengeluaran" name="jenisPengeluaran" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nominal" class="form-label">Nominal</label>
+                        <input type="number" class="form-control" id="nominal" name="nominal" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop Up Edit Pengeluaran -->
+{% for pengeluaran in pengeluaran_data %}
+<div class="modal fade" id="editPengeluaranModal{{ pengeluaran._id }}" tabindex="-1"
+    aria-labelledby="editPengeluaranModalLabel{{ pengeluaran._id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPengeluaranModalLabel{{ pengeluaran._id }}">Edit Pengeluaran</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Edit Pengeluaran -->
+                <form id="formEditPengeluaran{{ pengeluaran._id }}" data-pengeluaran-id="{{ pengeluaran._id }}">
+                    <div class="mb-3">
+                        <label for="editTanggal{{ pengeluaran._id }}" class="form-label">Tanggal</label>
+                        <input type="date" class="form-control" id="editTanggal{{ pengeluaran._id }}"
+                            name="editTanggal" value="{{ pengeluaran.tanggal }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNamaPengeluaran{{ pengeluaran._id }}" class="form-label">Jenis Pengeluaran</label>
+                        <input type="text" class="form-control" id="editNamaPengeluaran{{ pengeluaran._id }}"
+                            name="editNamaPengeluaran" value="{{ pengeluaran.jenis_pengeluaran }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editnominal{{ pengeluaran._id }}" class="form-label">Nominal</label>
+                        <input type="text" class="form-control" id="editnominal{{ pengeluaran._id }}"
+                            name="editnominal" value="{{ pengeluaran.nominal }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    //Add
+    $(document).ready(function () {
+        $('#formTambahPengeluaran').on('submit', function (event) {
+            event.preventDefault();
+
+            var pengeluaranData = {
+                jenis_pengeluaran: $('#jenisPengeluaran').val(),
+                tanggal: $('#tanggal').val(),
+                nominal: $('#nominal').val()
+            };
+
+            $.ajax({
+                url: '/pengeluaran/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(pengeluaranData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#tambahPengeluaranModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    // Edit
+    $(document).ready(function () {
+        $('form[id^="formEditPengeluaran"]').on('submit', function (event) {
+            event.preventDefault();
+            var pengeluaranId = $(this).attr('data-pengeluaran-id');
+            var pengeluaranData = {
+                jenis_pengeluaran: $('#editNamaPengeluaran' + pengeluaranId).val(),
+                tanggal: $('#editTanggal' + pengeluaranId).val(),
+                nominal: $('#editnominal' + pengeluaranId).val()
+            };
+
+            $.ajax({
+                url: '/pengeluaran/update/' + pengeluaranId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(pengeluaranData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editPengeluaranModal' + pengeluaranId).modal('hide');
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    //Delete
+    $(document).ready(function () {
+        $('.btn-delete-pengeluaran').on('click', function () {
+            var pengeluaranId = $(this).data('pengeluaran-id');
+            if (confirm('Apakah Anda yakin ingin menghapus pengeluaran ini?')) {
+                $.ajax({
+                    url: '/pengeluaran/hapus/' + pengeluaranId,
+                    type: 'GET',
+                    success: function (response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

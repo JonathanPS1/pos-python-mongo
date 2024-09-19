@@ -1,0 +1,252 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Member</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahMemberModal">
+                    Add Member
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('membership') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Member -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Kode Member</th>
+                <th scope="col">Nama Member</th>
+                <th scope="col">Alamat</th>
+                <th scope="col">No Telepon</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for membership in membership_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td><span class="bg-info p-1">{{ membership.kode_member }}</span></td>
+                <td>{{ membership.nama_member }}</td>
+                <td>{{ membership.alamat }}</td>
+                <td>{{ membership.no_telepon }}</td>
+                <td>
+                    <!-- Edit Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editMemberModal{{ membership._id }}">
+                        Edit
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-membership"
+                        data-membership-id="{{ membership._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('membership', page=1) }}"><< </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('membership', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_membership // per_page) + (1 if total_membership % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('membership', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_membership // per_page) + (1 if total_membership % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('membership', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_membership // per_page) + (1 if total_membership % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('membership', page=(total_membership // per_page) + (1 if total_membership % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+<!-- PopUp Tambah Member -->
+<div class="modal fade" id="tambahMemberModal" tabindex="-1" aria-labelledby="tambahMemberModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahMemberModalLabel">Add Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input Member -->
+                <form id="formTambahMember">
+                    <div class="mb-3">
+                        <label for="kodeMember" class="form-label">Kode Member</label>
+                        <input type="text" class="form-control" id="kodeMember" name="kodeMember" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="namaMember" class="form-label">Nama Member</label>
+                        <input type="text" class="form-control" id="namaMember" name="namaMember" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="alamat" class="form-label">Alamat</label>
+                        <input type="text" class="form-control" id="alamat" name="alamat" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noTelepon" class="form-label">No Telepon</label>
+                        <input type="text" class="form-control" id="noTelepon" name="noTelepon" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop Up Edit Member -->
+{% for membership in membership_data %}
+<div class="modal fade" id="editMemberModal{{ membership._id }}" tabindex="-1"
+    aria-labelledby="editMemberModalLabel{{ membership._id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMemberModalLabel{{ membership._id }}">Edit Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Edit Member -->
+                <form id="formEditMember{{ membership._id }}" data-membership-id="{{ membership._id }}">
+                    <div class="mb-3">
+                        <label for="editKodeMember{{ membership._id }}" class="form-label">Kode Member</label>
+                        <input type="text" class="form-control" id="editKodeMember{{ membership._id }}"
+                            name="editKodeMember" value="{{ membership.kode_member }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNamaMember{{ membership._id }}" class="form-label">Nama Member</label>
+                        <input type="text" class="form-control" id="editNamaMember{{ membership._id }}"
+                            name="editNamaMember" value="{{ membership.nama_member }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAlamat{{ membership._id }}" class="form-label">Alamat</label>
+                        <input type="text" class="form-control" id="editAlamat{{ membership._id }}"
+                            name="editAlamat" value="{{ membership.alamat }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editNoTelepon{{ membership._id }}" class="form-label">No Telepon</label>
+                        <input type="text" class="form-control" id="editNoTelepon{{ membership._id }}"
+                            name="editNoTelepon" value="{{ membership.no_telepon }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Edit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+    //Add
+    $(document).ready(function () {
+        $('#formTambahMember').on('submit', function (event) {
+            event.preventDefault();
+
+            var memberData = {
+                kode_member: $('#kodeMember').val(),
+                nama_member: $('#namaMember').val(),
+                alamat: $('#alamat').val(),
+                no_telepon: $('#noTelepon').val()
+            };
+
+            $.ajax({
+                url: '/membership/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(memberData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#tambahMemberModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    // Edit
+    $(document).ready(function () {
+        $('form[id^="formEditMember"]').on('submit', function (event) {
+            event.preventDefault();
+            var membershipId = $(this).attr('data-membership-id');
+            var memberData = {
+                kode_member: $('#editKodeMember' + membershipId).val(),
+                nama_member: $('#editNamaMember' + membershipId).val(),
+                alamat: $('#editAlamat' + membershipId).val(),
+                no_telepon: $('#editNoTelepon' + membershipId).val()
+            };
+
+            $.ajax({
+                url: '/membership/update/' + membershipId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(memberData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editMemberModal' + membershipId).modal('hide');
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    //Delete
+    $(document).ready(function () {
+        $('.btn-delete-membership').on('click', function () {
+            var membershipId = $(this).data('membership-id');
+            if (confirm('Apakah Anda yakin ingin menghapus membership ini?')) {
+                $.ajax({
+                    url: '/membership/hapus/' + membershipId,
+                    type: 'GET',
+                    success: function (response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

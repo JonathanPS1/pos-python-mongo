@@ -1,0 +1,422 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Transaksi Penjualan</h2>
+    <div class="form-group row">
+        <form>
+            <div class="input-group">
+                <label for="kodeProduk" class="col-sm-2 col-form-label">Kode Produk</label>
+                <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                    aria-describedby="basic-addon2" name="search">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#pilihProdukModal">Cari Produk</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="table table-bordered mt-4" id="productTable">
+        <thead class="thead-light">
+            <tr>
+                <th>No</th>
+                <th>Kode Produk</th>
+                <th>Nama Produk</th>
+                <th>Harga</th>
+                <th>Jumlah</th>
+                <th>Diskon</th>
+                <th>Sub Total</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="pay-banner">
+        Bayar: Rp. <span id="totalPay">0</span>
+    </div>
+
+    <form id="transactionForm">
+        <div class="form-group row">
+            <label for="total" class="col-sm-2 col-form-label">Total</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="total" disabled>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <div class="input-group">
+                <label for="member" class="col-sm-2 col-form-label">Member</label>
+                <input type="text" class="form-control" id="member" value="">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#pilihMemberModal">Cari Member</button>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <label for="diskon" class="col-sm-2 col-form-label">Diskon Member (%)</label>
+            <div class="col-sm-10">
+                <input type="number" class="form-control" id="diskon_member" disabled>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <label for="bayar" class="col-sm-2 col-form-label">Bayar</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="bayar" disabled>
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <label for="diterima" class="col-sm-2 col-form-label">Diterima</label>
+            <div class="col-sm-10">
+                <input type="number" class="form-control" id="diterima">
+            </div>
+        </div>
+        <div class="form-group row mt-3">
+            <label for="kembali" class="col-sm-2 col-form-label">Kembalian</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="kembali" disabled>
+            </div>
+        </div>
+        <button type="button" class="btn btn-primary" id="simpanTransaksi">Simpan Transaksi</button>
+    </form>
+</div>
+
+<!-- PopUp Pilih Member -->
+<div class="modal fade" id="pilihMemberModal" tabindex="-1" aria-labelledby="pilihMemberModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pilihMemberModalLabel">Pilih Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelMember">
+                    <thead>
+                        <tr>
+                            <th>Nama Member</th>
+                            <th>Alamat</th>
+                            <th>No. Telepon</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in membership %}
+                        <tr>
+                            <td>{{ member.nama_member }}</td>
+                            <td>{{ member.alamat }}</td>
+                            <td>{{ member.no_telepon }}</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-pilih-member"
+                                    data-member-nama="{{ member.nama_member }}"
+                                    data-member-id="{{ member.kode_member }}">Pilih</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Pilih Produk -->
+<div class="modal fade" id="pilihProdukModal" tabindex="-1" aria-labelledby="pilihProdukModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pilihProdukModalLabel">Pilih Produk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered" id="tabelProduk">
+                    <thead>
+                        <tr>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Harga</th>
+                            <th>Diskon (%)</th>
+                            <th>Stok</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for produk in products %}
+                        <tr>
+                            <td>{{ produk.kode_produk }}</td>
+                            <td>{{ produk.nama_produk }}</td>
+                            <td>{{ produk.harga_jual | format_currency }}</td>
+                            <td>{{ produk.diskon }}</td>
+                            <td>{{ produk.stok }}</td>
+                            <td>
+                                <button type="button" class="btn btn-primary btn-pilih-produk"
+                                    data-produk-kode="{{ produk.kode_produk }}"
+                                    data-produk-nama="{{ produk.nama_produk }}"
+                                    data-produk-harga="{{ produk.harga_jual}}" data-produk-diskon="{{ produk.diskon }}"
+                                    data-produk-stok="{{ produk.stok }}" {% if produk.stok <=0 %} disabled {% endif %}>
+                                    Pilih
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PopUp Cetak Struk -->
+<div class="modal fade" id="cetakStrukModal" tabindex="-1" aria-labelledby="cetakStrukModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cetakStrukModalLabel">Cetak Struk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="strukContent">
+                    <!-- Konten -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="printStrukButton">Cetak Struk</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+    integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/5.1.3/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgY+f3Zj1rFZCqdhvg9aTboeH2yK48A8we5m8Bm" crossorigin="anonymous"></script>
+<script>
+    $(document).on('click', '.btn-pilih-member', function () {
+        var namaMember = $(this).data('member-nama');
+        var alamatMember = $(this).data('member-alamat');
+        var teleponMember = $(this).data('member-telepon');
+
+        $('#member').val(namaMember);
+        $('#pilihMemberModal').modal('hide');
+        $('#diskon_member').val('10');
+    });
+
+    // Fungsi untuk menambahkan produk ke dalam tabel
+    function addProductToTable(kode, nama, harga, diskon) {
+        var rowCount = $('#productTable tbody tr').length + 1;
+        var subTotal = harga;
+
+        $('#productTable tbody').append(`
+        <tr>
+            <td>${rowCount}</td>
+            <td>${kode}</td>
+            <td>${nama}</td>
+            <td class="harga-produk">${harga}</td>
+            <td><input type="number" class="form-control jumlah-produk" value="1" min="1" onchange="updateTotalPay()"></td>
+            <td class="diskon-produk">${diskon}</td>
+            <td class="sub-total">${subTotal}</td>
+            <td><button type="button" class="btn btn-danger btn-remove-product">Hapus</button></td>
+        </tr>
+    `);
+
+        updateTotalPay();
+        updateTransactionForm();
+    }
+
+    function updateTotalPay() {
+        var totalPay = 0;
+        var diskonMember = $('#diskon_member').val() || 0;
+        $('#productTable tbody tr').each(function () {
+            var harga = parseFloat($(this).find('.harga-produk').text());
+            var jumlah = parseFloat($(this).find('.jumlah-produk').val());
+            var diskon = parseFloat($(this).find('.diskon-produk').text() || 0);
+            var subTotal = (harga * jumlah) * (1 - diskon / 100);
+            totalPay += subTotal;
+            parseFloat($(this).find('.sub-total').text(subTotal.toFixed(0)));
+        });
+        var totalBayar = totalPay * (1 - diskonMember / 100);
+        $('#totalPay').text(totalPay.toFixed(0));
+        $('#bayar').val(totalBayar.toFixed(0));
+        updateTransactionForm();
+        calculateChange();
+    }
+
+    function updateTransactionForm() {
+        var total = $('#totalPay').text();
+        $('#total').val(total);
+    }
+
+    function calculateChange() {
+        var totalPay = parseFloat($('#bayar').val());
+        var amountPaid = parseFloat($('#diterima').val()) || 0;
+        var change = amountPaid - totalPay;
+        $('#kembali').val(change.toFixed(0));
+    }
+
+    //Jika Tidak Punya Member
+    $('#bayar').on('blur', function () {
+        var value = $(this).val().trim();
+        if (value === '' || isNaN(parseFloat(value))) {
+            $(this).val('0');
+        }
+    });
+
+    // Pilih Produk
+    document.querySelectorAll('.btn-pilih-produk').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const produkKode = this.getAttribute('data-produk-kode');
+            const produkNama = this.getAttribute('data-produk-nama');
+            const produkHarga = this.getAttribute('data-produk-harga');
+            const produkDiskon = this.getAttribute('data-produk-diskon');
+            const produkStok = parseInt(this.getAttribute('data-produk-stok'));
+
+            if (produkStok > 0) {
+                addProductToTable(produkKode, produkNama, produkHarga, produkDiskon);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('pilihProdukModal'));
+                modal.hide();
+            } else {
+                alert('Stok produk habis');
+            }
+        });
+    });
+
+
+    // Hapus Produk
+    $(document).on('click', '.btn-remove-product', function () {
+        $(this).closest('tr').remove();
+        updateTotalPay();
+        updateTransactionForm();
+    });
+
+    // Perbarui total bayar
+    $(document).on('input', '.jumlah-produk', function () {
+        updateTotalPay();
+        updateTransactionForm();
+    });
+
+    // Perbarui kembalian
+    $('#diterima').on('input', function () {
+        calculateChange();
+    });
+
+    // Simpan Transaksi
+    $(document).on('click', '#simpanTransaksi', function () {
+        var total = $('#total').val();
+        var bayar = $('#bayar').val();
+        var diterima = $('#diterima').val();
+        var kembali = diterima - bayar;
+        $('#kembali').val(kembali.toFixed(0));
+        var member = $('#member').val() || "";
+        var diskon_member = parseFloat($('#diskon_member').val())
+        var products = [];
+
+        // Buat array products dari tabel
+        $('#productTable tbody tr').each(function () {
+            var kodeProduk = $(this).find('td:eq(1)').text();
+            var namaProduk = $(this).find('td:eq(2)').text();
+            var harga = $(this).find('td:eq(3)').text();
+            var jumlah = $(this).find('.jumlah-produk').val();
+            var diskon = $(this).find('.diskon-produk').text();
+            var subtotal = $(this).find('.sub-total').text();
+
+            products.push({
+                kode_produk: kodeProduk,
+                nama_produk: namaProduk,
+                harga: parseFloat(harga),
+                jumlah: parseFloat(jumlah),
+                diskon: parseFloat(diskon),
+                sub_total: parseFloat(subtotal)
+            });
+        });
+
+        var penjualanData = {
+            total: parseFloat(total),
+            member: member,
+            diskon_member: parseFloat(diskon_member),
+            bayar: parseFloat(bayar),
+            diterima: parseFloat(diterima),
+            kembali: parseFloat(kembali),
+            products: products
+        };
+
+        tambahPenjualan(penjualanData);
+
+        var strukContent = `
+            <div class="text-center">
+                <h3 class="fw-bold fst-italic">Sycronize Store</h3>
+                <p>Jl Kalinyamat No.3, Bandungan </p>
+                <p>Telp: 08123456789</p>
+            </div>
+            <table class="table mt-3">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kode Produk</th>
+                        <th>Nama Produk</th>
+                        <th>Harga</th>
+                        <th>Jumlah</th>
+                        <th>Diskon (%)</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        function tambahPenjualan(data) {
+            $.ajax({
+                type: 'POST',
+                url: 'penjualan/tambah',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function (response) {
+                    console.log('Penjualan berhasil ditambahkan:', response);
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error details:", xhr.responseText);
+                    console.error("Status:", status);
+                    console.error("Error:", error);
+                    alert('Terjadi kesalahan saat menyimpan transaksi: ' + xhr.responseText);
+                }
+
+            });
+        }
+
+        //Tabel Struk
+        $('#productTable tbody tr').each(function (index) {
+            var kodeProduk = $(this).find('td:eq(1)').text();
+            var namaProduk = $(this).find('td:eq(2)').text();
+            var harga = $(this).find('td:eq(3)').text();
+            var jumlah = $(this).find('.jumlah-produk').val();
+            var diskon = $(this).find('.diskon-produk').text();
+            var subtotal = $(this).find('.sub-total').text();
+            strukContent += `<tr>
+                    <td>${index + 1}</td>
+                    <td>${kodeProduk}</td>
+                    <td>${namaProduk}</td>
+                    <td>${harga}</td>
+                    <td>${jumlah}</td>
+                    <td>${diskon}</td>
+                    <td>${subtotal}</td>
+                </tr>`;
+        });
+
+        //Struk
+        strukContent += `</tbody></table>
+            <div class="text-end">
+                <p>Total: Rp. ${total}</p>
+                <p>Diterima: Rp. ${diterima}</p>
+                <p>Kembalian: Rp. ${kembali.toFixed(0)}</p>
+            </div>`;
+
+        $('#strukContent').html(strukContent);
+        $('#cetakStrukModal').modal('show');
+    });
+
+    $(document).on('click', '#printStrukButton', function () {
+        var printContents = document.getElementById('strukContent').innerHTML;
+        var originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+        window.print();
+        document.body.innerHTML = originalContents;
+    });
+</script>
+{% endblock %}

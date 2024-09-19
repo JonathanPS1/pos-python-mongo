@@ -1,0 +1,228 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Kategori</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahKategoriModal">
+                    Add Kategori
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('kategori') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel Kategori -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Nama</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for kategori in kategori_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ kategori.nama_kategori }}</td>
+                <td>
+                    <!-- Edit Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editKategoriModal{{ kategori._id }}">
+                        Edit
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-kategori"
+                        data-kategori-id="{{ kategori._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('kategori', page=1) }}"><< </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('kategori', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_kategori // per_page) + (1 if total_kategori % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('kategori', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_kategori // per_page) + (1 if total_kategori % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('kategori', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_kategori // per_page) + (1 if total_kategori % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('kategori', page=(total_kategori // per_page) + (1 if total_kategori % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+<!-- PopUp Tambah Kategori -->
+<div class="modal fade" id="tambahKategoriModal" tabindex="-1" aria-labelledby="tambahKategoriModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahKategoriModalLabel">Add Kategori</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input Kategori -->
+                <form id="formTambahKategori">
+                    <div class="mb-3">
+                        <label for="namaKategori" class="form-label">Nama Kategori</label>
+                        <input type="text" class="form-control" id="namaKategori" name="namaKategori" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop Up Edit Kategori -->
+{% for kategori in kategori_data %}
+<div class="modal fade" id="editKategoriModal{{ kategori._id }}" tabindex="-1"
+    aria-labelledby="editKategoriModalLabel{{ kategori._id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editKategoriModalLabel{{ kategori._id }}">Edit Kategori</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Edit Kategori -->
+                <form id="formEditKategori{{ kategori._id }}" data-kategori-id="{{ kategori._id }}">
+                    <div class="mb-3">
+                        <label for="editNamaKategori{{ kategori._id }}" class="form-label">Nama Kategori</label>
+                        <input type="text" class="form-control" id="editNamaKategori{{ kategori._id }}"
+                            name="editNamaKategori" value="{{ kategori.nama_kategori }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+
+    //Add
+    $(document).ready(function () {
+        $('#formTambahKategori').on('submit', function (event) {
+            event.preventDefault();
+
+            var kategoriData = {
+                namaKategori: $('#namaKategori').val()
+            };
+
+            $.ajax({
+                url: '/kategori/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(kategoriData),
+                success: function (response) {
+                    console.log(kategoriData)
+                    alert(response.message);
+                    $('#tambahKategoriModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+    // Edit
+    $(document).ready(function () {
+        $('.btn-edit-kategori').on('click', function () {
+            var kategoriId = $(this).data('kategori-id');
+            var modal = $('#editKategoriModal' + kategoriId);
+            var form = modal.find('form');
+            var namaKategori = $(this).data('nama-kategori');
+
+            form.find('#editNamaKategori' + kategoriId).val(namaKategori);
+            form.attr('data-kategori-id', kategoriId);
+
+            modal.modal('show');
+        });
+
+        $('form[id^="formEditKategori"]').on('submit', function (event) {
+            event.preventDefault();
+            var kategoriId = $(this).attr('data-kategori-id');
+            var namaKategori = $(this).find('#editNamaKategori' + kategoriId).val();
+
+            var kategoriData = {
+                nama_kategori: namaKategori
+            };
+
+            $.ajax({
+                url: '/kategori/update/' + kategoriId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(kategoriData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editKategoriModal' + kategoriId).modal('hide');
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        });
+    });
+
+    //Delete
+    $(document).ready(function () {
+        $('.btn-delete-kategori').on('click', function () {
+            var kategoriId = $(this).data('kategori-id');
+            if (confirm('Apakah Anda yakin ingin menghapus kategori ini?')) {
+                $.ajax({
+                    url: '/kategori/hapus/' + kategoriId,
+                    type: 'GET',
+                    success: function (response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+
+</script>
+{% endblock %}

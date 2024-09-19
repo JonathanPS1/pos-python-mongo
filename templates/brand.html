@@ -1,0 +1,230 @@
+{% extends 'master.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <h3 class="fw-bold fs-4 mb-3">Daftar Brand</h3>
+    <div class="mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <button type="button" class="btn btn-success mb-3" data-bs-toggle="modal"
+                    data-bs-target="#tambahbrandModal">
+                    Add Brand
+                </button>
+            </div>
+            <div class="col-md-6">
+                <form method="GET" action="{{ url_for('brand') }}">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Search" aria-label="Search"
+                            aria-describedby="basic-addon2" name="search" value="{{ request.args.get('search', '') }}">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-addon2">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Tabel brand -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">No</th>
+                <th scope="col">Nama</th>
+                <th scope="col">Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for brand in brand_data %}
+            <tr>
+                <th scope="row">{{ (page - 1) * per_page + loop.index0 + 1 }}</th>
+                <td>{{ brand.nama_brand }}</td>
+                <td>
+                    <!-- Edit Button -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                        data-bs-target="#editbrandModal{{ brand._id }}">
+                        Edit
+                    </button>
+                    <!-- Delete Button -->
+                    <button type="button" class="btn btn-danger btn-delete-brand"
+                        data-brand-id="{{ brand._id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('brand', page=1) }}"><< </a>
+            </li>
+            {% if page > 1 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('brand', page=page-1) }}">Previous</a>
+            </li>
+            {% endif %}
+            {% for num in range(1, (total_brand // per_page) + (1 if total_brand % per_page > 0 else 0) + 1) %}
+            <li class="page-item {% if num == page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('brand', page=num) }}">{{ num }}</a>
+            </li>
+            {% endfor %}
+            {% if page < (total_brand // per_page) + (1 if total_brand % per_page> 0 else 0) %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('brand', page=page+1) }}">Next</a>
+                </li>
+                {% endif %}
+                <li
+                    class="page-item {% if page == (total_brand // per_page) + (1 if total_brand % per_page > 0 else 0) %}disabled{% endif %}">
+                    <a class="page-link"
+                        href="{{ url_for('brand', page=(total_brand // per_page) + (1 if total_brand % per_page > 0 else 0)) }}">>></a>
+                </li>
+        </ul>
+    </nav>
+</div>
+<!-- PopUp Tambah brand -->
+<div class="modal fade" id="tambahbrandModal" tabindex="-1" aria-labelledby="tambahbrandModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tambahbrandModalLabel">Add brand</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Input brand -->
+                <form id="formTambahbrand">
+                    <div class="mb-3">
+                        <label for="namabrand" class="form-label">Nama brand</label>
+                        <input type="text" class="form-control" id="namabrand" name="namabrand" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Add</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pop Up Edit brand -->
+{% for brand in brand_data %}
+<div class="modal fade" id="editbrandModal{{ brand._id }}" tabindex="-1"
+    aria-labelledby="editbrandModalLabel{{ brand._id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editbrandModalLabel{{ brand._id }}">Edit brand</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form untuk Edit brand -->
+                <form id="formEditbrand{{ brand._id }}" data-brand-id="{{ brand._id }}">
+                    <div class="mb-3">
+                        <label for="editNamabrand{{ brand._id }}" class="form-label">Nama brand</label>
+                        <input type="text" class="form-control" id="editNamabrand{{ brand._id }}"
+                            name="editNamabrand" value="{{ brand.nama_brand }}" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-success">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+
+    //Add
+    $(document).ready(function () {
+        $('#formTambahbrand').on('submit', function (event) {
+            event.preventDefault();
+
+            var brandData = {
+                namabrand: $('#namabrand').val()
+            };
+
+            $.ajax({
+                url: '/brand/tambah',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(brandData),
+                success: function (response) {
+                    console.log(brandData)
+                    alert(response.message);
+                    $('#tambahbrandModal').modal('hide');
+                    location.reload();
+                },
+                error: function (xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+    // Edit
+    $(document).ready(function () {
+        $('.btn-edit-brand').on('click', function () {
+            var brandId = $(this).data('brand-id');
+            var modal = $('#editbrandModal' + brandId);
+            var form = modal.find('form');
+            var namabrand = $(this).data('nama-brand');
+
+            form.find('#editNamabrand' + brandId).val(namabrand);
+            form.attr('data-brand-id', brandId);
+
+            modal.modal('show');
+        });
+
+        $('form[id^="formEditbrand"]').on('submit', function (event) {
+            event.preventDefault();
+            var brandId = $(this).attr('data-brand-id');
+            var namabrand = $(this).find('#editNamabrand' + brandId).val();
+
+            var brandData = {
+                nama_brand: namabrand
+            };
+
+            $.ajax({
+                url: '/brand/update/' + brandId,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(brandData),
+                success: function (response) {
+                    alert(response.message);
+                    $('#editbrandModal' + brandId).modal('hide');
+                    location.reload();
+                },
+                error: function (response) {
+                    alert(response.responseJSON.message);
+                }
+            });
+        });
+    });
+
+
+    //Delete
+    $(document).ready(function () {
+        $('.btn-delete-brand').on('click', function () {
+            var brandId = $(this).data('brand-id');
+            if (confirm('Apakah Anda yakin ingin menghapus brand ini?')) {
+                $.ajax({
+                    url: '/brand/hapus/' + brandId,
+                    type: 'GET',
+                    success: function (response) {
+                        alert(response.message);
+                        location.reload();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+
+</script>
+{% endblock %}
